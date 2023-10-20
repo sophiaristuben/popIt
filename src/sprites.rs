@@ -31,6 +31,11 @@ pub fn create_sprites() ->  Vec<GPUSprite> {
         sheet_region: [0.0, 0.0, 0.5, 0.5], // duck
     }];
 
+    sprites.push(GPUSprite {
+        screen_region: [512.0, 0.0, 64.0, 64.0],
+        sheet_region: [0.0, 0.5, 0.5, 0.5], // starting landing pad
+    });
+
 
     for y in (1..NUMBER_OF_CELLS-1).step_by(2) {
         // Create a horizontal line of stars, asteroids, and bombs

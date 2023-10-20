@@ -385,7 +385,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     let corners = vec![(sprites[0].screen_region[0], sprites[0].screen_region[1]), 
                                                         (sprites[0].screen_region[0] + sprites[0].screen_region[2], sprites[0].screen_region[1]),
                                                         (sprites[0].screen_region[0], sprites[0].screen_region[1]+ sprites[0].screen_region[3]),
-                                                        (sprites[0].screen_region[0] + sprites[0].screen_region[2], sprites[0].screen_region[1]+ sprites[0].screen_region[3])];
+                                                        (sprites[0].screen_region[0] + sprites[0].screen_region[2], sprites[0].screen_region[1]+ sprites[0].screen_region[3]), 
+                                                        (sprites[0].screen_region[0] + sprites[0].screen_region[2]/2.0, sprites[0].screen_region[1]+ sprites[0].screen_region[3]/2.0)];
 
     
                 // sprites moving horizontally
@@ -410,7 +411,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     let mut direction_switch_counter = 0;
                     let mut current_direction = 0; // Start with direction 0 (right)
 
-                    for i in 1..sprites.len() {
+                    for i in 2..sprites.len() {
                         if current_direction == 0 {
                             // If direction is 0 (right), move right
                             if sprites[i].screen_region[0] < WINDOW_WIDTH {
@@ -469,7 +470,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                                 print!("LANDED");
                                 has_landed = true;
                                 break;  
-                            }
+                            } 
                         }
                     }
                     game_over = !has_landed;
