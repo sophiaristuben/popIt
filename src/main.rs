@@ -458,17 +458,29 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         
                     // }
 
+                    // if sprite has not collided then game over
+                    let mut has_landed: bool = false;
                     for i in 1..sprites.len() {
+                        if has_landed {
+                            break;
+                        }
                         for (cx, cy) in corners.iter(){
                             if cx >= &sprites[i].screen_region[0] && cx <= &(sprites[i].screen_region[0] + sprites[0].screen_region[2]) && cy >= &sprites[i].screen_region[1] && cy <= &(sprites[i].screen_region[1] + sprites[0].screen_region[3]) {
-                                print!("COLLIDED");
-                                // game_over = true;  
+                                print!("LANDED");
+                                has_landed = true;
+                                break;  
                             }
                         }
                     }
+                    game_over = !has_landed;
                     
                     // move sprite based on input
                     sprite_position = sprites::move_sprite_input(&input, sprite_position);
+
+                    // check if sprite has moved horizontally off the screen
+                    if sprite_position[0] < (-1.0 * CELL_WIDTH) || sprite_position[0] > WINDOW_WIDTH + CELL_WIDTH {
+                        game_over = true;
+                    }
 
                     if sprite_position[1] + CELL_HEIGHT >= WINDOW_HEIGHT {
                         you_won = true;
