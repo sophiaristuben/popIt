@@ -302,7 +302,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     };
 
     // create background stuff
-    let path_bgnd = Path::new("content/space.jpeg");
+    let path_bgnd = Path::new("content/river.jpeg");
     let (tex_bgnd, _over_image) = gpu.load_texture(path_bgnd,None)
         .await
         .expect("Couldn't load space img");
