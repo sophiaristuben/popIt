@@ -108,17 +108,9 @@ pub fn move_sprite_input(input: &Input, mut sprite_position: [f32; 2]) -> [f32; 
         }
         if input.is_key_pressed(winit::event::VirtualKeyCode::Left) {
             sprite_position[0] -= CELL_WIDTH;
-
-            if sprite_position[0] < 0.0 {
-                sprite_position[0] = 0.0;
-            }
         }
         if input.is_key_pressed(winit::event::VirtualKeyCode::Right) {
-            if sprite_position[0] + CELL_WIDTH < WINDOW_WIDTH {
-                sprite_position[0] += CELL_WIDTH;
-            } else {
-                sprite_position[0] = WINDOW_WIDTH - CELL_WIDTH;
-            }
+            sprite_position[0] += CELL_WIDTH;
         }  
         sprite_position
 }
