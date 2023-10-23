@@ -1,5 +1,4 @@
 use std::{borrow::Cow, mem, path::Path};
-use rand::Rng;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -260,6 +259,14 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     let mut sprites: Vec<GPUSprite> = sprites::create_sprites();
 
+    println!("{}", sprites.len());
+
+    let mut sprite_dirs: Vec<SpriteDir> = Vec::new();
+
+    // first and second sprite has dir 0 (none)
+    sprite_dirs.push(SpriteDir::None);
+    sprite_dirs.push(SpriteDir::None);
+
     // Initialize sprite position within the grid
     let mut sprite_position: [f32; 2] = [512.0, 0.0];  
 
@@ -336,6 +343,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut show_end_screen = false;
 
     let path_win = Path::new("content/youWin.png");
+
+    let mut dirs_set = false;
 
    //LOAD TEXTURE
    let (tex_win, _win_image) = gpu.load_texture(path_win,None)
@@ -421,7 +430,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             } else {
                                 sprites[i].screen_region[0] = 0.0;
                             }
-                            sprites[i].sprite_dir = SpriteDir(1);
+                            if !dirs_set {
+                                sprite_dirs.push(SpriteDir::Right)
+                            }
                         } else {
                             // If direction is 1 (left), move left
                             if sprites[i].screen_region[0] > 0.0 {
@@ -429,7 +440,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             } else {
                                 sprites[i].screen_region[0] = WINDOW_WIDTH;
                             }
-                            sprites[i].sprite_dir = SpriteDir(2);
+                            if !dirs_set {
+                                sprite_dirs.push(SpriteDir::Left)
+                            }
                         }
 
                         direction_switch_counter += 1;
@@ -440,6 +453,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             current_direction = 1 - current_direction; // Toggle between 0 and 1
                         }
                     }
+                    dirs_set = true;
 
 
                         // if even move right
@@ -474,7 +488,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                                 print!("LANDED");
                                 has_landed = true;
                                 // set our current sprites direction
-                                sprites[0].sprite_dir = sprites[i].sprite_dir;
+                                sprite_dirs[0] = sprite_dirs[i];
                                 break;  
                             } 
                         }
@@ -494,9 +508,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     }
                     
                     // move sprite w log
-                    if sprites[0].sprite_dir == SpriteDir(1)  {
+                    if sprite_dirs[0] == SpriteDir::Right  {
                         sprite_position[0] += 1.0;
-                    } else if sprites[0].sprite_dir == SpriteDir(2) {
+                    } else if sprite_dirs[0] == SpriteDir::Left {
                         sprite_position[0] -= 1.0;
                     }
 
