@@ -34,7 +34,7 @@ pub fn create_sprites() ->  Vec<GPUSprite> {
 
     let mut sprites: Vec<GPUSprite> = vec![GPUSprite {
         screen_region: [WINDOW_WIDTH/2.0, 32.0, 64.0, 64.0],
-        sheet_region: [0.0, 0.0, 0.5, 0.5], // duck
+        sheet_region: [0.0, 0.0, 0.5, 0.35], // duck
         sprite_dir: SpriteDir(0),
     }];
 
@@ -52,52 +52,52 @@ pub fn create_sprites() ->  Vec<GPUSprite> {
 
             // STARS
             sprites.push(GPUSprite {
-                screen_region: [1 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.0, 0.5, 0.5, 0.5], // star
+                screen_region: [1 as f32 * CELL_WIDTH, y_value, 128.0, 16.0],
+                sheet_region: [0.5, 4.0/28.0, 0.5, 1.25/28.0], // big log
                 sprite_dir: SpriteDir(0),
             });
             sprites.push(GPUSprite {
-                screen_region: [2 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.0, 0.5, 0.5, 0.5], // star
+                screen_region: [1 as f32 * CELL_WIDTH, y_value, 128.0, 16.0],
+                sheet_region: [0.5, 4.0/28.0, 0.5, 1.25/28.0], // big log
                 sprite_dir: SpriteDir(0),
             });
             sprites.push(GPUSprite {
-                screen_region: [3 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.0, 0.5, 0.5, 0.5], // star
+                screen_region: [1 as f32 * CELL_WIDTH, y_value, 128.0, 16.0],
+                sheet_region: [0.5, 4.0/28.0, 0.5, 1.25/28.0], // big log
                 sprite_dir: SpriteDir(0),
             });
 
             // ASTEROIDS
             sprites.push(GPUSprite {
-                screen_region: [6 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.5, 0.5, 0.5, 0.5], // asteroid
+                screen_region: [6 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
+                sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // lillypad
                 sprite_dir: SpriteDir(0),
             });
             sprites.push(GPUSprite {
-                screen_region: [7 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.5, 0.5, 0.5, 0.5], // asteroid
+                screen_region: [6 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
+                sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // lillypad
                 sprite_dir: SpriteDir(0),
             });
             sprites.push(GPUSprite {
-                screen_region: [8 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.5, 0.5, 0.5, 0.5], // asteroid
+                screen_region: [6 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
+                sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // lillypad
                 sprite_dir: SpriteDir(0),
             });
 
             // BOMBS
             sprites.push(GPUSprite {
-                screen_region: [11 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.5, 0.0, 0.5, 0.5], // bomb
+                screen_region: [6 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
+                sheet_region: [0.75/28.0, 20.0/28.0, 7.0/16.5, 6.5/28.0], // flower lillypad
                 sprite_dir: SpriteDir(0),
             });
             sprites.push(GPUSprite {
-                screen_region: [12 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.5, 0.0, 0.5, 0.5], // bomb
+                screen_region: [6 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
+                sheet_region: [0.75/28.0, 20.0/28.0, 7.0/16.5, 6.5/28.0], // flower lillypad
                 sprite_dir: SpriteDir(0),
             });
             sprites.push(GPUSprite {
-                screen_region: [13 as f32 * CELL_WIDTH, y_value, 64.0, 64.0],
-                sheet_region: [0.5, 0.0, 0.5, 0.5], // bomb
+                screen_region: [6 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
+                sheet_region: [0.75/28.0, 20.0/28.0, 7.0/16.5, 6.5/28.0], // flower lillypad
                 sprite_dir: SpriteDir(0),
             });
         // }
