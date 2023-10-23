@@ -10,6 +10,8 @@ mod gpu;
 mod sprites;
 use sprites::{GPUCamera, SpriteOption, GPUSprite};
 
+use crate::sprites::SpriteDir;
+
 
 #[cfg(all(not(feature = "uniforms"), not(feature = "vbuf")))]
 const SPRITES: SpriteOption = SpriteOption::Storage;
@@ -419,6 +421,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             } else {
                                 sprites[i].screen_region[0] = 0.0;
                             }
+                            sprites[i].sprite_dir = SpriteDir(1);
                         } else {
                             // If direction is 1 (left), move left
                             if sprites[i].screen_region[0] > 0.0 {
@@ -426,6 +429,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             } else {
                                 sprites[i].screen_region[0] = WINDOW_WIDTH;
                             }
+                            sprites[i].sprite_dir = SpriteDir(2);
                         }
 
                         direction_switch_counter += 1;
@@ -469,6 +473,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             if cx >= &sprites[i].screen_region[0] && cx <= &(sprites[i].screen_region[0] + sprites[0].screen_region[2]) && cy >= &sprites[i].screen_region[1] && cy <= &(sprites[i].screen_region[1] + sprites[0].screen_region[3]) {
                                 print!("LANDED");
                                 has_landed = true;
+                                // set our current sprites direction
+                                sprites[0].sprite_dir = sprites[i].sprite_dir;
                                 break;  
                             } 
                         }
@@ -485,6 +491,13 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                     if sprite_position[1] + CELL_HEIGHT >= WINDOW_HEIGHT {
                         you_won = true;
+                    }
+                    
+                    // move sprite w log
+                    if sprites[0].sprite_dir == SpriteDir(1)  {
+                        sprite_position[0] += 1.0;
+                    } else if sprites[0].sprite_dir == SpriteDir(2) {
+                        sprite_position[0] -= 1.0;
                     }
 
                     //update sprite position
