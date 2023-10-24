@@ -411,7 +411,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     let mut direction_switch_counter = 0;
                     let mut current_direction = 0; // Start with direction 0 (right)
 
-                    for i in 2..sprites.len() {
+                    for i in 33..sprites.len() {
                         if current_direction == 0 {
                             // If direction is 0 (right), move right
                             if sprites[i].screen_region[0] < WINDOW_WIDTH {

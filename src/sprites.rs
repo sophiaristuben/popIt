@@ -29,13 +29,20 @@ pub fn create_sprites() ->  Vec<GPUSprite> {
         screen_region: [WINDOW_WIDTH/2.0, 32.0, 64.0, 64.0],
         sheet_region: [0.0, 0.0, 0.5, 0.35], // duck
     }];
+    
+    for x in (0..NUMBER_OF_CELLS) {
+        let x_value = x as f32 * CELL_WIDTH;
+    
+        sprites.push(GPUSprite {
+            screen_region: [x_value, 0.0, 64.0, 16.0],
+            sheet_region: [0.5, 4.0/28.0, 0.5, 1.25/28.0], // big log
+        });
 
-    sprites.push(GPUSprite {
-        screen_region: [512.0, 0.0, 64.0, 64.0],
-        sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // starting landing pad
-        // sprite_dir: SpriteDir(0),
-    });
-
+        sprites.push(GPUSprite {
+            screen_region: [x_value, WINDOW_HEIGHT-CELL_HEIGHT, 60.0, 50.0],
+            sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // end lillypad
+        });
+    }
 
     for y in (1..NUMBER_OF_CELLS-1).step_by(2) {
         // Create a horizontal line of stars, asteroids, and bombs
@@ -102,7 +109,6 @@ pub fn move_sprite_input(input: &Input, mut sprite_position: [f32; 2]) -> [f32; 
         
         if input.is_key_pressed(winit::event::VirtualKeyCode::Down) {
             sprite_position[1] -= 1.5*CELL_HEIGHT;
-
             if sprite_position[1] < 0.0 {
                 sprite_position[1] = 0.0;
             }
