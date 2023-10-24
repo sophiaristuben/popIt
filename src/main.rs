@@ -412,6 +412,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                     let mut direction_switch_counter = 0;
                     let mut current_direction = 0; // Start with direction 0 (right)
+                    print!("{}", sprites.len());
 
                     for i in 2..sprites.len() {
                         if current_direction == 0 {
@@ -421,7 +422,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             } else {
                                 sprites[i].screen_region[0] = 0.0;
                             }
-                            sprites[i].sprite_dir = SpriteDir(1);
+                            // sprites[i].sprite_dir = SpriteDir(1);
                         } else {
                             // If direction is 1 (left), move left
                             if sprites[i].screen_region[0] > 0.0 {
@@ -429,7 +430,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             } else {
                                 sprites[i].screen_region[0] = WINDOW_WIDTH;
                             }
-                            sprites[i].sprite_dir = SpriteDir(2);
+                            // sprites[i].sprite_dir = SpriteDir(2);
                         }
 
                         direction_switch_counter += 1;
@@ -442,26 +443,18 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     }
 
 
-                        // if even move right
-                        // if i%2==0{
-                        //     if sprites[i].screen_region[0] < WINDOW_WIDTH{
-                        //         sprites[i].screen_region[0] += 5.0;
-                        //     }else{
-                        //         let num = rand::thread_rng().gen_range(1..10); 
-                        //         sprites[i].screen_region[0] = 0.0;
-                        //         sprites[i].screen_region[1] =  num as f32 * CELL_HEIGHT;
-                        //     }
-                        // } else { // odd move left
-                        //     if sprites[i].screen_region[0] > 0.0{
-                        //         sprites[i].screen_region[0] -= 5.0;
-                        //     } else {
-                        //         let num = rand::thread_rng().gen_range(1..10); 
-                        //         sprites[i].screen_region[0] = WINDOW_WIDTH;
-                        //         sprites[i].screen_region[1] =  num as f32 * CELL_HEIGHT;
-                        //     }
-                        // }
-                        
-                    // }
+                    let skinny_rect_width = 2.0; // Adjust the width as needed
+                    let skinny_rect_height = sprites[0].screen_region[3]; // Use the duck's height
+                    let skinny_rect_x = sprites[0].screen_region[0] + (sprites[0].screen_region[2] - skinny_rect_width) / 2.0;
+                    let skinny_rect_y = sprites[0].screen_region[1];
+
+                    let skinny_rect_corners = vec![
+                        (skinny_rect_x, skinny_rect_y),
+                        (skinny_rect_x + skinny_rect_width, skinny_rect_y),
+                        (skinny_rect_x, skinny_rect_y + skinny_rect_height),
+                        (skinny_rect_x + skinny_rect_width, skinny_rect_y + skinny_rect_height),
+                        (skinny_rect_x + skinny_rect_width / 2.0, skinny_rect_y + skinny_rect_height / 2.0),
+                    ];
 
                     // if sprite has not collided then game over
                     let mut has_landed: bool = false;
@@ -469,12 +462,15 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         if has_landed {
                             break;
                         }
-                        for (cx, cy) in corners.iter(){
+
+                        for (cx, cy) in skinny_rect_corners.iter(){
                             if cx >= &sprites[i].screen_region[0] && cx <= &(sprites[i].screen_region[0] + sprites[0].screen_region[2]) && cy >= &sprites[i].screen_region[1] && cy <= &(sprites[i].screen_region[1] + sprites[0].screen_region[3]) {
                                 print!("LANDED");
                                 has_landed = true;
                                 // set our current sprites direction
-                                sprites[0].sprite_dir = sprites[i].sprite_dir;
+                                sprite_position[0] = sprites[i].screen_region[0];
+                                // sprite_position[1] = sprites[i].screen_region[1];
+                                // sprites[0].sprite_dir = sprites[i].sprite_dir;
                                 break;  
                             } 
                         }
@@ -494,11 +490,11 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     }
                     
                     // move sprite w log
-                    if sprites[0].sprite_dir == SpriteDir(1)  {
-                        sprite_position[0] += 1.0;
-                    } else if sprites[0].sprite_dir == SpriteDir(2) {
-                        sprite_position[0] -= 1.0;
-                    }
+                    // if sprites[0].sprite_dir == SpriteDir(1)  {
+                    //     sprite_position[0] += 1.0;
+                    // } else if sprites[0].sprite_dir == SpriteDir(2) {
+                    //     sprite_position[0] -= 1.0;
+                    // }
 
                     //update sprite position
                     sprites[0].screen_region[0] = sprite_position[0];
