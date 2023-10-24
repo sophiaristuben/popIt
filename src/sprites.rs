@@ -2,11 +2,6 @@ use bytemuck::{Pod, Zeroable};
 use crate::{WINDOW_WIDTH, WINDOW_HEIGHT, NUMBER_OF_CELLS, CELL_WIDTH, CELL_HEIGHT};
 use crate::input::Input;
 
-#[repr(u8)]
-#[derive(PartialEq, Clone, Copy)]
-
-pub enum SpriteDir {None=0, Left, Right}
-
 #[repr(C)]
 #[derive(Clone, Copy, Zeroable, Pod)]
 pub struct GPUSprite {

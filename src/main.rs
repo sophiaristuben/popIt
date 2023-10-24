@@ -9,7 +9,6 @@ mod gpu;
 mod sprites;
 use sprites::{GPUCamera, SpriteOption, GPUSprite};
 
-use crate::sprites::SpriteDir;
 
 
 #[cfg(all(not(feature = "uniforms"), not(feature = "vbuf")))]
@@ -260,13 +259,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut sprites: Vec<GPUSprite> = sprites::create_sprites();
 
     println!("{}", sprites.len());
-
-    let mut sprite_dirs: Vec<SpriteDir> = Vec::new();
-
-    // first and second sprite has dir 0 (none)
-    sprite_dirs.push(SpriteDir::None);
-    sprite_dirs.push(SpriteDir::None);
-
     // Initialize sprite position within the grid
     let mut sprite_position: [f32; 2] = [512.0, 0.0];  
 
@@ -448,7 +440,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                             current_direction = 1 - current_direction; // Toggle between 0 and 1
                         }
                     }
-                    dirs_set = true;
 
 
                     let skinny_rect_width = 2.0; // Adjust the width as needed
