@@ -258,7 +258,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     let mut sprites: Vec<GPUSprite> = sprites::create_sprites();
 
-    println!("{}", sprites.len());
     // Initialize sprite position within the grid
     let mut sprite_position: [f32; 2] = [512.0, 0.0];  
 
@@ -335,8 +334,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     let mut show_end_screen = false;
 
     let path_win = Path::new("content/youWin.png");
-
-    let mut dirs_set = false;
 
    //LOAD TEXTURE
    let (tex_win, _win_image) = gpu.load_texture(path_win,None)
@@ -468,6 +465,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                                 has_landed = true;
                                 // set our current sprites direction
                                 sprite_position[0] = sprites[i].screen_region[0];
+                                sprite_position[1] = sprites[i].screen_region[1]+20.0;
                                 break;  
                             } 
                         }
