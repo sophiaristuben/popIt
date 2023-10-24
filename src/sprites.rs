@@ -101,7 +101,7 @@ pub fn move_sprite_input(input: &Input, mut sprite_position: [f32; 2]) -> [f32; 
         }
         
         if input.is_key_pressed(winit::event::VirtualKeyCode::Down) {
-            sprite_position[1] -= CELL_HEIGHT;
+            sprite_position[1] -= 1.5*CELL_HEIGHT;
 
             if sprite_position[1] < 0.0 {
                 sprite_position[1] = 0.0;
