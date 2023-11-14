@@ -1,0 +1,1 @@
+/Users/nishiguchimaika/popIt/target/debug/riverducky: /Users/nishiguchimaika/popIt/src/gpu.rs /Users/nishiguchimaika/popIt/src/input.rs /Users/nishiguchimaika/popIt/src/main.rs /Users/nishiguchimaika/popIt/src/shader.wgsl /Users/nishiguchimaika/popIt/src/shader2.wgsl /Users/nishiguchimaika/popIt/src/sprites.rs

@@ -27,7 +27,7 @@ pub fn create_sprites() ->  Vec<GPUSprite> {
 
     let mut sprites: Vec<GPUSprite> = vec![GPUSprite {
         screen_region: [WINDOW_WIDTH/2.0, 32.0, 64.0, 64.0],
-        sheet_region: [0.0, 0.0, 0.5, 0.35], // duck
+        sheet_region: [0.5, 0.0, 0.5, 0.35], // duck
     }];
     
     for x in (0..NUMBER_OF_CELLS) {

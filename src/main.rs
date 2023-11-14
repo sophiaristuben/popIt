@@ -70,7 +70,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         multisampled: false,
                     },
                     count: None,
-                },
+                }, 
                 // The sampler binding
                 wgpu::BindGroupLayoutEntry {
                     // This matches the binding in the shader
