@@ -57,13 +57,21 @@ pub fn create_sprites() -> Vec<GPUSprite> {
 
 
 
-pub fn move_platform(input: &Input, mut sprite_position: [f32; 2]) -> [f32; 2] {
+pub fn move_platform(input: &Input, mut platform_position: [f32; 2]) -> [f32; 2] {
     if input.is_key_down(winit::event::VirtualKeyCode::Left) {
-        sprite_position[0] -= 5.0;
+        platform_position[0] -= 5.0;
     }
     if input.is_key_down(winit::event::VirtualKeyCode::Right) {
-        sprite_position[0] += 5.0;
+        platform_position[0] += 5.0;
     }  
-    sprite_position
+
+    // prevent from going off screen
+    if platform_position[0] < 0.0 {
+        platform_position[0] = 0.0;
+    }
+    if platform_position[0] + CELL_WIDTH > WINDOW_WIDTH {
+        platform_position[0] = WINDOW_WIDTH - CELL_WIDTH;
+    }
+    platform_position
 }
 

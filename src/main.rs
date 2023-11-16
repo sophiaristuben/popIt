@@ -306,7 +306,12 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     });
 
     let mut sprites = sprites::create_sprites();
-    let mut sprite_position: [f32; 2] = [WINDOW_WIDTH/2.0, 0.0];  
+    let mut platform_position: [f32; 2] = [WINDOW_WIDTH/2.0, 0.0];  
+
+    // for the ball motion
+    let mut ball_position: [f32; 2] = [WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0];
+    let mut ball_velocity: [f32; 2] = [3.0, 2.0]; // Adjust these values as needed
+
 
     const SPRITE_UNIFORM_SIZE: u64 = 512 * mem::size_of::<GPUSprite>() as u64;
     let buffer_sprite = gpu.device.create_buffer(&wgpu::BufferDescriptor {
@@ -364,9 +369,31 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 window.request_redraw();
             }
             Event::RedrawRequested(_) => {
-                sprite_position = sprites::move_platform(&input, sprite_position);
-                sprites[0].screen_region[0] = sprite_position[0];
-                sprites[0].screen_region[1] = sprite_position[1];
+                // PLATOFORM MOTION
+                platform_position = sprites::move_platform(&input, platform_position);
+                sprites[0].screen_region[0] = platform_position[0];
+                sprites[0].screen_region[1] = platform_position[1];
+                // PLATOFORM MOTION END
+
+                // BALL MOTION
+                ball_position[0] += ball_velocity[0];
+                ball_position[1] += ball_velocity[1];
+                // colliding off walss
+                if ball_position[0] < 0.0 || ball_position[0] > WINDOW_WIDTH {
+                    ball_velocity[0] = -ball_velocity[0];
+                }
+                if ball_position[1] < 0.0 || ball_position[1] > WINDOW_HEIGHT {
+                    ball_velocity[1] = -ball_velocity[1];
+                }
+                let platform_top = platform_position[1];
+                let platform_bottom = platform_top + CELL_HEIGHT;
+                if ball_position[1] > platform_top && ball_position[1] < platform_bottom {
+                    ball_velocity[1] = -ball_velocity[1];
+                }
+                // update ball's screen region in sprites vector
+                sprites[5].screen_region[0] = ball_position[0];
+                sprites[5].screen_region[1] = ball_position[1];
+                // BALL MOTION END
 
                 // Then send the data to the GPU!
                 input.next_frame();
