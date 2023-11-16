@@ -1,1 +1,0 @@
-/Users/sophiaristuben/cs181g/popIt/target/debug/riverducky: /Users/sophiaristuben/cs181g/popIt/src/gpu.rs /Users/sophiaristuben/cs181g/popIt/src/input.rs /Users/sophiaristuben/cs181g/popIt/src/main.rs /Users/sophiaristuben/cs181g/popIt/src/shader.wgsl /Users/sophiaristuben/cs181g/popIt/src/shader2.wgsl /Users/sophiaristuben/cs181g/popIt/src/sprites.rs
