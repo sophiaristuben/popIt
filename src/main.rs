@@ -1,3 +1,4 @@
+use bytemuck::{Pod, Zeroable};
 use std::{borrow::Cow, mem, path::Path};
 use winit::{
     event::{Event, WindowEvent},
@@ -9,8 +10,6 @@ mod gpu;
 mod sprites;
 use sprites::{GPUCamera, SpriteOption, GPUSprite};
 
-
-
 #[cfg(all(not(feature = "uniforms"), not(feature = "vbuf")))]
 const SPRITES: SpriteOption = SpriteOption::Storage;
 #[cfg(feature = "uniforms")]
@@ -20,7 +19,6 @@ const SPRITES: SpriteOption = SpriteOption::VertexBuffer;
 #[cfg(all(feature = "vbuf", feature = "uniform"))]
 compile_error!("Can't choose both vbuf and uniform sprite features");
 
-// get the width and height of the whole game screen
 pub const  WINDOW_WIDTH: f32 = 1024.0;
 pub const  WINDOW_HEIGHT: f32 = 768.0;
 
@@ -30,13 +28,19 @@ pub const NUMBER_OF_CELLS: i32 = 16;
 pub const CELL_WIDTH: f32 = WINDOW_WIDTH / NUMBER_OF_CELLS as f32;
 pub const CELL_HEIGHT: f32 = WINDOW_HEIGHT / NUMBER_OF_CELLS as f32;
 
-
 async fn run(event_loop: EventLoop<()>, window: Window) {
+    // let mut gpu = gpu::GPUState::new(&window);
+    // let mut input = input::Input::default();
+    // let mut renderer = sprites::SpriteRenderer::new(&gpu);
+    let mut game_over = false; 
+    //let mut you_won = false;
+    
+    let mut gpu = gpu::WGPU::new(&window).await; //added to
+    
+    let size = window.inner_size();
 
     log::info!("Use sprite mode {:?}", SPRITES);
-    
-    let mut gpu = gpu::WGPU::new(&window).await;
-    
+
     // Load the shaders from disk
     let shader = gpu.device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: None,
@@ -70,7 +74,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         multisampled: false,
                     },
                     count: None,
-                }, 
+                },
                 // The sampler binding
                 wgpu::BindGroupLayoutEntry {
                     // This matches the binding in the shader
@@ -157,6 +161,10 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         push_constant_ranges: &[],
     });
 
+    // let swapchain_capabilities = surface.get_capabilities(&adapter);
+    // let swapchain_format = swapchain_capabilities.formats[0];
+
+
     let pipeline_layout_over = gpu.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
         bind_group_layouts: &[&texture_bind_group_layout],
@@ -223,10 +231,51 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         multiview: None,
     });
 
+    let render_pipeline = gpu.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: None,
+        layout: Some(&pipeline_layout),
+        vertex: wgpu::VertexState {
+            module: &shader,
+            entry_point: match SPRITES {
+                SpriteOption::Storage => "vs_storage_main",
+                SpriteOption::Uniform => "vs_uniform_main",
+                SpriteOption::VertexBuffer => "vs_vbuf_main",
+            },
+            buffers: match SPRITES {
+                SpriteOption::VertexBuffer => &[wgpu::VertexBufferLayout {
+                    array_stride: std::mem::size_of::<GPUSprite>() as u64,
+                    step_mode: wgpu::VertexStepMode::Instance,
+                    attributes: &[
+                        wgpu::VertexAttribute {
+                            format: wgpu::VertexFormat::Float32x4,
+                            offset: 0,
+                            shader_location: 0,
+                        },
+                        wgpu::VertexAttribute {
+                            format: wgpu::VertexFormat::Float32x4,
+                            offset: std::mem::size_of::<[f32; 4]>() as u64,
+                            shader_location: 1,
+                        },
+                    ],
+                }],
+                _ => &[],
+            },
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &shader,
+            entry_point: "fs_main",
+            targets: &[Some(gpu.config.format.into())],
+        }),
+        primitive: wgpu::PrimitiveState::default(),
+        depth_stencil: None,
+        multisample: wgpu::MultisampleState::default(),
+        multiview: None,
+    });
+
     gpu.surface.configure(&gpu.device, &gpu.config);
     let path_sprites = Path::new("content/sprites.png");
     let (sprite_tex, _sprite_img) = gpu.load_texture(path_sprites, None)
-        .await
+         .await
         .expect("Couldn't load spritesheet texture");
     let view_sprite = sprite_tex.create_view(&wgpu::TextureViewDescriptor::default());
     let sampler_sprite = gpu.device.create_sampler(&wgpu::SamplerDescriptor::default());
@@ -256,10 +305,13 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         mapped_at_creation: false,
     });
 
-    let mut sprites: Vec<GPUSprite> = sprites::create_sprites();
+    let mut sprites = sprites::create_sprites();
+    let mut platform_position: [f32; 2] = [WINDOW_WIDTH/2.0, 0.0];  
 
-    // Initialize sprite position within the grid
-    let mut sprite_position: [f32; 2] = [512.0, 0.0];  
+    // for the ball motion
+    let mut ball_position: [f32; 2] = [WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0];
+    let mut ball_velocity: [f32; 2] = [3.0, 7.0]; // Adjust these values as needed
+
 
     const SPRITE_UNIFORM_SIZE: u64 = 512 * mem::size_of::<GPUSprite>() as u64;
     let buffer_sprite = gpu.device.create_buffer(&wgpu::BufferDescriptor {
@@ -300,62 +352,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
             ],
         }),
     };
-
-    // create background stuff
-    let path_bgnd = Path::new("content/river.jpeg");
-    let (tex_bgnd, _over_image) = gpu.load_texture(path_bgnd,None)
-        .await
-        .expect("Couldn't load space img");
-
-    let view_bgnd = tex_bgnd.create_view(&wgpu::TextureViewDescriptor::default());
-    let sampler_bgnd = gpu.device.create_sampler(&wgpu::SamplerDescriptor::default());
-
-    // create title
-    let path_title = Path::new("content/RIVER_DUCKY.png");
-    let (tex_title, _over_image) = gpu.load_texture(path_title,None)
-        .await
-        .expect("Couldn't load space img");
-
-    let view_title = tex_title.create_view(&wgpu::TextureViewDescriptor::default());
-    let sampler_title = gpu.device.create_sampler(&wgpu::SamplerDescriptor::default());
-        
-    // set first background to instructions
-    let mut texture_bind_group_bgnd = gpu.device.create_bind_group(&wgpu::BindGroupDescriptor {
-        label: None,
-        layout: &texture_bind_group_layout,
-        entries: &[
-            // One for the texture, one for the sampler
-            wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::TextureView(&view_title),
-            },
-            wgpu::BindGroupEntry {
-                binding: 1,
-                resource: wgpu::BindingResource::Sampler(&sampler_title),
-            },
-        ],
-    });
-
     gpu.queue.write_buffer(&buffer_camera, 0, bytemuck::bytes_of(&camera));
     gpu.queue.write_buffer(&buffer_sprite, 0, bytemuck::cast_slice(&sprites));
     let mut input = input::Input::default();
-    let mut game_over = false; 
-    let mut you_won = false;
-    let mut show_end_screen = false;
-    let mut show_instructions = true;
-
-    let path_win = Path::new("content/youWin.png");
-
-   //LOAD TEXTURE
-   let (tex_win, _win_image) = gpu.load_texture(path_win,None)
-        .await
-        .expect("Couldn't load game over img");
-    
-    let path_over = Path::new("content/gameOver.png");
-    let (tex_over, _over_image) = gpu.load_texture(path_over,None)
-        .await
-        .expect("Couldn't load game over img");
-
     event_loop.run(move |event, _, control_flow| {
 
         *control_flow = ControlFlow::Wait;
@@ -364,17 +363,18 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 event: WindowEvent::Resized(size),
                 ..
             } => {
+                // Reconfigure the surface with the new size
                 gpu.resize(size);
+                // On macos the window needs to be redrawn manually after resizing
                 window.request_redraw();
             }
             Event::RedrawRequested(_) => {
-                if game_over {
-                    sprites[0].screen_region[1] -= 5.0;
-                    if sprites[0].screen_region[1] < 0.0 {
-                        show_end_screen = true;
-                    }
-                }
 
+                if game_over {
+                    println!("Game Over");
+                    *control_flow = ControlFlow::Exit;
+                }
+                /*
                 else if you_won {
                     // enemy sprites fall!
                     let mut enemies = sprites.len()-1;
@@ -389,101 +389,68 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         show_end_screen = true;
                     }
                 }
+                 */
 
                 else {
 
-                    // collision sprites
-                    let corners = vec![(sprites[0].screen_region[0], sprites[0].screen_region[1]), 
-                                                        (sprites[0].screen_region[0] + sprites[0].screen_region[2], sprites[0].screen_region[1]),
-                                                        (sprites[0].screen_region[0], sprites[0].screen_region[1]+ sprites[0].screen_region[3]),
-                                                        (sprites[0].screen_region[0] + sprites[0].screen_region[2], sprites[0].screen_region[1]+ sprites[0].screen_region[3]), 
-                                                        (sprites[0].screen_region[0] + sprites[0].screen_region[2]/2.0, sprites[0].screen_region[1]+ sprites[0].screen_region[3]/2.0)];
+                    // PLATOFORM MOTION
+                    platform_position = sprites::move_platform(&input, platform_position);
+                    sprites[0].screen_region[0] = platform_position[0];
+                    sprites[0].screen_region[1] = platform_position[1];
+                    // PLATOFORM MOTION END
 
-
-                    let mut direction_switch_counter = 0;
-                    let mut current_direction = 0; // Start with direction 0 (right)
-
-                    for i in 33..sprites.len() {
-                        if current_direction == 0 {
-                            // If direction is 0 (right), move right
-                            if sprites[i].screen_region[0] < WINDOW_WIDTH {
-                                sprites[i].screen_region[0] += 1.0;
-                            } else {
-                                sprites[i].screen_region[0] = 0.0;
-                            }
-                        } else {
-                            // If direction is 1 (left), move left
-                            if sprites[i].screen_region[0] > 0.0 {
-                                sprites[i].screen_region[0] -= 1.0;
-                            } else {
-                                sprites[i].screen_region[0] = WINDOW_WIDTH;
-                            }
-                        }
-
-                        direction_switch_counter += 1;
-
-                        if direction_switch_counter == 9 {
-                            // Switch the direction after every 3 sprites
-                            direction_switch_counter = 0;
-                            current_direction = 1 - current_direction; // Toggle between 0 and 1
-                        }
+                    // BALL MOTION
+                    ball_position[0] += ball_velocity[0];
+                    ball_position[1] += ball_velocity[1];
+                    // colliding off walss
+                    if ball_position[0] < 0.0 || ball_position[0] > WINDOW_WIDTH {
+                        ball_velocity[0] = -ball_velocity[0];
                     }
-
-
-                    let skinny_rect_width = 2.0; // Adjust the width as needed
-                    let skinny_rect_height = sprites[0].screen_region[3]; // Use the duck's height
-                    let skinny_rect_x = sprites[0].screen_region[0] + (sprites[0].screen_region[2] - skinny_rect_width) / 2.0;
-                    let skinny_rect_y = sprites[0].screen_region[1];
-
-                    let skinny_rect_corners = vec![
-                        (skinny_rect_x, skinny_rect_y),
-                        (skinny_rect_x + skinny_rect_width, skinny_rect_y),
-                        (skinny_rect_x, skinny_rect_y + skinny_rect_height),
-                        (skinny_rect_x + skinny_rect_width, skinny_rect_y + skinny_rect_height),
-                        (skinny_rect_x + skinny_rect_width / 2.0, skinny_rect_y + skinny_rect_height / 2.0),
-                    ];
-
-                    // if sprite has not collided then game over
-                    let mut has_landed: bool = false;
-                    for i in 1..sprites.len() {
-                        if has_landed {
-                            break;
-                        }
-
-                        for (cx, cy) in skinny_rect_corners.iter(){
-                            if cx >= &sprites[i].screen_region[0] && cx <= &(sprites[i].screen_region[0] + sprites[0].screen_region[2]) && cy >= &sprites[i].screen_region[1] && cy <= &(sprites[i].screen_region[1] + sprites[0].screen_region[3]) {
-                                print!("LANDED");
-                                has_landed = true;
-                                // set our current sprites direction
-                                sprite_position[0] = sprites[i].screen_region[0];
-                                sprite_position[1] = sprites[i].screen_region[1]+20.0;
-                                break;  
-                            } 
-                        }
+                    if ball_position[1] > WINDOW_HEIGHT {
+                        ball_velocity[1] = -ball_velocity[1];
                     }
-                    game_over = !has_landed;
+                    /*
+                    if ball_position[1] < 0.0 || ball_position[1] > WINDOW_HEIGHT {
+                        ball_velocity[1] = -ball_velocity[1];
+                    }
+                     */
+        
+                    //need to detect collision
+                    let platform_top = platform_position[1];
+                    let platform_bottom = platform_top + CELL_HEIGHT;
+                    let platform_left = platform_position[0];
+                    let platform_right = platform_left + CELL_WIDTH;
+                    if ball_position[1] > platform_top && ball_position[1] < platform_bottom && ball_position[0] > platform_left && ball_position[0] < platform_right{
+                        println!("{} and {}", platform_left, platform_right);
+                        ball_velocity[1] = -ball_velocity[1];
+                    }
+                    /*
+                    if ball_position[1] > platform_top && ball_position[1] < platform_bottom {
+                        ball_velocity[1] = -ball_velocity[1];
+                    }
+                     */
                     
-                    // move sprite based on input
-                    sprite_position = sprites::move_sprite_input(&input, sprite_position);
-
-                    if input.is_key_pressed(winit::event::VirtualKeyCode::Space) {
-                        show_instructions = false;
-                    }
-
-                    // check if sprite has moved horizontally off the screen
-                    if sprite_position[0] < (-1.0 * CELL_WIDTH) || sprite_position[0] > WINDOW_WIDTH + CELL_WIDTH {
+                    // game over
+                    if ball_position[1] < 0.0 {
+                        println!("Touched ground");
                         game_over = true;
                     }
 
+                    // update ball's screen region in sprites vector
+                    sprites[5].screen_region[0] = ball_position[0];
+                    sprites[5].screen_region[1] = ball_position[1];
+                    // BALL MOTION END
+
+                    
+
+                    /*
                     if sprite_position[1] + CELL_HEIGHT >= WINDOW_HEIGHT {
                         you_won = true;
                     }
-
-                    //update sprite position
-                    sprites[0].screen_region[0] = sprite_position[0];
-                    sprites[0].screen_region[1] = sprite_position[1];
+                     */
                 }
                 
+
                 // Then send the data to the GPU!
                 input.next_frame();
 
@@ -496,92 +463,32 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 let view = frame
                     .texture
                     .create_view(&wgpu::TextureViewDescriptor::default());
-                
                 let mut encoder =
                     gpu.device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-                    {
+                {
                     let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                         label: None,
                         color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                             view: &view,
                             resolve_target: None,
                             ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT),
+                                load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                                 store: true,
                             },
                         })],
                         depth_stencil_attachment: None,
                     });
-                    if show_instructions {
-                        // draw instructions
-                        rpass.set_pipeline(&render_pipeline_full);
-                        rpass.set_bind_group(0, &texture_bind_group_bgnd, &[]);
-                        rpass.draw(0..6, 0..1);
+                    rpass.set_pipeline(&render_pipeline);
+                    if SPRITES == SpriteOption::VertexBuffer {
+                        rpass.set_vertex_buffer(0, buffer_sprite.slice(..));
                     }
-                    else if show_end_screen{
-                        let tex_end = 
-                        if game_over {
-                            &tex_over
-                        } else {
-                            &tex_win
-                        };
-                        let view_end = tex_end.create_view(&wgpu::TextureViewDescriptor::default());
-                        let sampler_end = gpu.device.create_sampler(&wgpu::SamplerDescriptor::default());
-                            
-                        texture_bind_group_bgnd = gpu.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                            label: None,
-                            layout: &texture_bind_group_layout,
-                            entries: &[
-                                // One for the texture, one for the sampler
-                                wgpu::BindGroupEntry {
-                                    binding: 0,
-                                    resource: wgpu::BindingResource::TextureView(&view_end),
-                                },
-                                wgpu::BindGroupEntry {
-                                    binding: 1,
-                                    resource: wgpu::BindingResource::Sampler(&sampler_end),
-                                },
-                            ],
-                        });
-
-                        // Draw end game screen
-                        rpass.set_pipeline(&render_pipeline_full);
-                        rpass.set_bind_group(0, &texture_bind_group_bgnd, &[]);
-                        rpass.draw(0..6, 0..1);
-                    } else {
-                        texture_bind_group_bgnd = gpu.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                            label: None,
-                            layout: &texture_bind_group_layout,
-                            entries: &[
-                                // One for the texture, one for the sampler
-                                wgpu::BindGroupEntry {
-                                    binding: 0,
-                                    resource: wgpu::BindingResource::TextureView(&view_bgnd),
-                                },
-                                wgpu::BindGroupEntry {
-                                    binding: 1,
-                                    resource: wgpu::BindingResource::Sampler(&sampler_bgnd),
-                                },
-                            ],
-                        });
-                        // Draw space background
-                        rpass.set_pipeline(&render_pipeline_full);
-                        rpass.set_bind_group(0, &texture_bind_group_bgnd, &[]);
-                        rpass.draw(0..6, 0..1);
-                        {
-                            rpass.set_pipeline(&render_pipeline);
-                            if SPRITES == SpriteOption::VertexBuffer {
-                                rpass.set_vertex_buffer(0, buffer_sprite.slice(..));
-                            }
-                            rpass.set_bind_group(0, &sprite_bind_group, &[]);
-                            rpass.set_bind_group(1, &texture_bind_group, &[]);
-                            // draw two triangles per sprite, and sprites-many sprites.
-                            // this uses instanced drawing, but it would also be okay
-                            // to draw 6 * sprites.len() vertices and use modular arithmetic
-                            // to figure out which sprite we're drawing.
-                            rpass.draw(0..6, 0..(sprites.len() as u32));
-                        }
-                    }
+                    rpass.set_bind_group(0, &sprite_bind_group, &[]);
+                    rpass.set_bind_group(1, &texture_bind_group, &[]);
+                    // draw two triangles per sprite, and sprites-many sprites.
+                    // this uses instanced drawing, but it would also be okay
+                    // to draw 6 * sprites.len() vertices and use modular arithmetic
+                    // to figure out which sprite we're drawing.
+                    rpass.draw(0..6, 0..(sprites.len() as u32));
                 }
                 gpu.queue.submit(Some(encoder.finish()));
                 frame.present();
@@ -640,4 +547,65 @@ fn main() {
             .expect("couldn't append canvas to document body");
         wasm_bindgen_futures::spawn_local(run(event_loop, window));
     }
+}
+async fn load_texture(
+    path: impl AsRef<std::path::Path>,
+    label: Option<&str>,
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+) -> Result<(wgpu::Texture, image::RgbaImage), Box<dyn std::error::Error>> {
+    #[cfg(target_arch = "wasm32")]
+    let img = {
+        let fetch = web_sys::window()
+            .map(|win| win.fetch_with_str(path.as_ref().to_str().unwrap()))
+            .unwrap();
+        let resp: web_sys::Response = wasm_bindgen_futures::JsFuture::from(fetch)
+            .await
+            .unwrap()
+            .into();
+        log::debug!("{:?} {:?}", &resp, resp.status());
+        let buf: js_sys::ArrayBuffer =
+            wasm_bindgen_futures::JsFuture::from(resp.array_buffer().unwrap())
+                .await
+                .unwrap()
+                .into();
+        log::debug!("{:?} {:?}", &buf, buf.byte_length());
+        let u8arr = js_sys::Uint8Array::new(&buf);
+        log::debug!("{:?}, {:?}", &u8arr, u8arr.length());
+        let mut bytes = vec![0; u8arr.length() as usize];
+        log::debug!("{:?}", &bytes);
+        u8arr.copy_to(&mut bytes);
+        image::load_from_memory_with_format(&bytes, image::ImageFormat::Png)
+            .map_err(|e| e.to_string())?
+            .to_rgba8()
+    };
+    #[cfg(not(target_arch = "wasm32"))]
+    let img = image::open(path.as_ref())?.to_rgba8();
+    let (width, height) = img.dimensions();
+    let size = wgpu::Extent3d {
+        width,
+        height,
+        depth_or_array_layers: 1,
+    };
+    let texture = device.create_texture(&wgpu::TextureDescriptor {
+        label,
+        size,
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+        view_formats: &[],
+    });
+    queue.write_texture(
+        texture.as_image_copy(),
+        &img,
+        wgpu::ImageDataLayout {
+            offset: 0,
+            bytes_per_row: Some(4 * width),
+            rows_per_image: Some(height),
+        },
+        size,
+    );
+    Ok((texture, img))
 }

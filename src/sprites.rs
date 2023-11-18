@@ -23,102 +23,54 @@ pub enum SpriteOption {
     VertexBuffer,
 }
 
-pub fn create_sprites() ->  Vec<GPUSprite> {
+pub fn create_sprites() -> Vec<GPUSprite> {
+    let mut sprites: Vec<GPUSprite> = vec![
+        GPUSprite { //0 somethin weird is happenign where 1-4 are not showing up
+            screen_region: [WINDOW_WIDTH/2.0, -16.0, CELL_WIDTH*2.0, CELL_HEIGHT],
+            sheet_region: [0.5, 0.0, 0.5, 0.5/3.0], // green brick PLATFORM SPRITE
+        },
+        GPUSprite { //1
+            screen_region: [128.0, 32.0, CELL_WIDTH, CELL_HEIGHT],
+            sheet_region: [0.0, 2.0 / 3.0, 0.5, 0.5 / 3.0], // yellow brick
+        },
+        GPUSprite { //2
+            screen_region: [128.0, 64.0, CELL_WIDTH, CELL_HEIGHT],
+            sheet_region: [0.0, 1.0 / 3.0, 0.5, 0.5 / 3.0], // blue brick
+        },
+        GPUSprite { //3
+            screen_region: [128.0, 128.0, CELL_WIDTH, CELL_HEIGHT],
+            sheet_region: [0.0, 0.0, 0.5, 0.5/3.0], // pink brick
+        },
+        GPUSprite { //4
+            screen_region: [128.0, 300.0, CELL_WIDTH, CELL_HEIGHT],
+            sheet_region: [0.5, 1.0 / 3.0, 0.5, 0.5 / 3.0], // purple brick
+        },
+        GPUSprite { //5
+            screen_region: [128.0, 500.0, 64.0, 96.0],
+            sheet_region: [0.5, 0.5, 0.5, 0.5], // ball - for physics
+        },
+    ];
 
-    let mut sprites: Vec<GPUSprite> = vec![GPUSprite {
-        screen_region: [WINDOW_WIDTH/2.0, 32.0, 64.0, 64.0],
-        sheet_region: [0.5, 0.0, 0.5, 0.35], // duck
-    }];
-    
-    for x in (0..NUMBER_OF_CELLS) {
-        let x_value = x as f32 * CELL_WIDTH;
-    
-        sprites.push(GPUSprite {
-            screen_region: [x_value, 0.0, 64.0, 16.0],
-            sheet_region: [0.5, 4.0/28.0, 0.5, 1.25/28.0], // big log
-        });
-
-        sprites.push(GPUSprite {
-            screen_region: [x_value, WINDOW_HEIGHT-CELL_HEIGHT, 60.0, 50.0],
-            sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // end lillypad
-        });
-    }
-
-    for y in (1..NUMBER_OF_CELLS-1).step_by(2) {
-        // Create a horizontal line of stars, asteroids, and bombs
-        // for x in 1..3 {
-            let y_value = y as f32 * CELL_HEIGHT;
-
-            // LOG
-            sprites.push(GPUSprite {
-                screen_region: [1 as f32 * CELL_WIDTH, y_value, 64.0, 16.0],
-                sheet_region: [0.5, 4.0/28.0, 0.5, 1.25/28.0], // big log
-                // sprite_dir: SpriteDir(0),
-            });
-            sprites.push(GPUSprite {
-                screen_region: [2 as f32 * CELL_WIDTH, y_value, 64.0, 16.0],
-                sheet_region: [0.5, 4.0/28.0, 0.5, 1.25/28.0], // big log
-            });
-            sprites.push(GPUSprite {
-                screen_region: [3 as f32 * CELL_WIDTH, y_value, 64.0, 16.0],
-                sheet_region: [0.5, 4.0/28.0, 0.5, 1.25/28.0], // big log
-            });
-
-            // LILLYPAD
-            sprites.push(GPUSprite {
-                screen_region: [6 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
-                sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // lillypad
-            });
-            sprites.push(GPUSprite {
-                screen_region: [7 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
-                sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // lillypad
-            });
-            sprites.push(GPUSprite {
-                screen_region: [8 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
-                sheet_region: [0.5, 11.0/28.0, 13.0/28.0, 6.0/28.0], // lillypad
-            });
-
-            // FLOWER
-            sprites.push(GPUSprite {
-                screen_region: [11 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
-                sheet_region: [0.75/28.0, 20.0/28.0, 7.0/16.5, 6.5/28.0], // flower lillypad
-            });
-            sprites.push(GPUSprite {
-                screen_region: [12 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
-                sheet_region: [0.75/28.0, 20.0/28.0, 7.0/16.5, 6.5/28.0], // flower lillypad
-            });
-            sprites.push(GPUSprite {
-                screen_region: [13 as f32 * CELL_WIDTH, y_value, 60.0, 50.0],
-                sheet_region: [0.75/28.0, 20.0/28.0, 7.0/16.5, 6.5/28.0], // flower lillypad
-            });
-        // }
-    }
     sprites
-
 }
 
-pub fn move_sprite_input(input: &Input, mut sprite_position: [f32; 2]) -> [f32; 2] {
-        // Update sprite position based on keyboard input
-        if input.is_key_pressed(winit::event::VirtualKeyCode::Up) {
-            if sprite_position[1] + CELL_HEIGHT < WINDOW_HEIGHT {
-                sprite_position[1] += 1.5*CELL_HEIGHT;
-            } else {
-                sprite_position[1] = WINDOW_HEIGHT - CELL_HEIGHT;
-            }
-        }
-        
-        if input.is_key_pressed(winit::event::VirtualKeyCode::Down) {
-            sprite_position[1] -= 1.5*CELL_HEIGHT;
-            if sprite_position[1] < 0.0 {
-                sprite_position[1] = 0.0;
-            }
-        }
-        if input.is_key_pressed(winit::event::VirtualKeyCode::Left) {
-            sprite_position[0] -= CELL_WIDTH;
-        }
-        if input.is_key_pressed(winit::event::VirtualKeyCode::Right) {
-            sprite_position[0] += CELL_WIDTH;
-        }  
-        sprite_position
-}
 
+
+
+pub fn move_platform(input: &Input, mut platform_position: [f32; 2]) -> [f32; 2] {
+    if input.is_key_down(winit::event::VirtualKeyCode::Left) {
+        platform_position[0] -= 5.0;
+    }
+    if input.is_key_down(winit::event::VirtualKeyCode::Right) {
+        platform_position[0] += 5.0;
+    }  
+
+    // prevent from going off screen
+    if platform_position[0] < 0.0 {
+        platform_position[0] = 0.0;
+    }
+    if platform_position[0] + CELL_WIDTH > WINDOW_WIDTH {
+        platform_position[0] = WINDOW_WIDTH - CELL_WIDTH;
+    }
+    platform_position
+}
