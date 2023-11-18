@@ -409,6 +409,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     if ball_position[1] > WINDOW_HEIGHT {
                         ball_velocity[1] = -ball_velocity[1];
                     }
+                    
+                    // for bouncing off the bottom, comment out later
                     /*
                     if ball_position[1] < 0.0 || ball_position[1] > WINDOW_HEIGHT {
                         ball_velocity[1] = -ball_velocity[1];
@@ -425,17 +427,18 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         ball_velocity[1] = -ball_velocity[1];
                     }
                     
-                    // for bouncing off the bottom, comment out later
+                    /* 
                     if ball_position[1] > platform_top && ball_position[1] < platform_bottom {
                         ball_velocity[1] = -ball_velocity[1];
                     }
+                    */
                      
                     
                     // game over
                     if ball_position[1] < 0.0 {
                         println!("Touched ground");
                         // commenting out for testing purposes
-                        // game_over = true;
+                        game_over = true;
                     }
 
                     // update ball's screen region in sprites vector
