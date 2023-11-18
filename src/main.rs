@@ -19,8 +19,9 @@ const SPRITES: SpriteOption = SpriteOption::VertexBuffer;
 #[cfg(all(feature = "vbuf", feature = "uniform"))]
 compile_error!("Can't choose both vbuf and uniform sprite features");
 
-pub const  WINDOW_WIDTH: f32 = 1024.0;
-pub const  WINDOW_HEIGHT: f32 = 768.0;
+// ask about how we can auto set this
+pub const  WINDOW_WIDTH: f32 = 970.0;
+pub const  WINDOW_HEIGHT: f32 = 700.0;
 
 pub const NUMBER_OF_CELLS: i32 = 16;
 
@@ -423,21 +424,23 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         println!("{} and {}", platform_left, platform_right);
                         ball_velocity[1] = -ball_velocity[1];
                     }
-                    /*
+                    
+                    // for bouncing off the bottom, comment out later
                     if ball_position[1] > platform_top && ball_position[1] < platform_bottom {
                         ball_velocity[1] = -ball_velocity[1];
                     }
-                     */
+                     
                     
                     // game over
                     if ball_position[1] < 0.0 {
                         println!("Touched ground");
-                        game_over = true;
+                        // commenting out for testing purposes
+                        // game_over = true;
                     }
 
                     // update ball's screen region in sprites vector
-                    sprites[5].screen_region[0] = ball_position[0];
-                    sprites[5].screen_region[1] = ball_position[1];
+                    sprites[1].screen_region[0] = ball_position[0];
+                    sprites[1].screen_region[1] = ball_position[1];
                     // BALL MOTION END
 
                     
