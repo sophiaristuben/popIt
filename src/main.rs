@@ -28,12 +28,12 @@ pub const NUMBER_OF_CELLS: i32 = 16;
 pub const CELL_WIDTH: f32 = WINDOW_WIDTH / NUMBER_OF_CELLS as f32;
 pub const CELL_HEIGHT: f32 = WINDOW_HEIGHT / NUMBER_OF_CELLS as f32;
 
-
-
 async fn run(event_loop: EventLoop<()>, window: Window) {
     // let mut gpu = gpu::GPUState::new(&window);
     // let mut input = input::Input::default();
     // let mut renderer = sprites::SpriteRenderer::new(&gpu);
+    let mut game_over = false; 
+    //let mut you_won = false;
     
     let mut gpu = gpu::WGPU::new(&window).await; //added to
     
@@ -310,8 +310,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
     // for the ball motion
     let mut ball_position: [f32; 2] = [WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0];
-    let mut ball_velocity: [f32; 2] = [3.0, 2.0]; // Adjust these values as needed
-
+    let mut ball_velocity: [f32; 2] = [3.0, 7.0]; // Adjust these values as needed
 
     const SPRITE_UNIFORM_SIZE: u64 = 512 * mem::size_of::<GPUSprite>() as u64;
     let buffer_sprite = gpu.device.create_buffer(&wgpu::BufferDescriptor {
@@ -369,31 +368,87 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 window.request_redraw();
             }
             Event::RedrawRequested(_) => {
-                // PLATOFORM MOTION
-                platform_position = sprites::move_platform(&input, platform_position);
-                sprites[0].screen_region[0] = platform_position[0];
-                sprites[0].screen_region[1] = platform_position[1];
-                // PLATOFORM MOTION END
 
-                // BALL MOTION
-                ball_position[0] += ball_velocity[0];
-                ball_position[1] += ball_velocity[1];
-                // colliding off walss
-                if ball_position[0] < 0.0 || ball_position[0] > WINDOW_WIDTH {
-                    ball_velocity[0] = -ball_velocity[0];
+                if game_over {
+                    println!("Game Over");
+                    *control_flow = ControlFlow::Exit;
                 }
-                if ball_position[1] < 0.0 || ball_position[1] > WINDOW_HEIGHT {
-                    ball_velocity[1] = -ball_velocity[1];
+                /*
+                else if you_won {
+                    // enemy sprites fall!
+                    let mut enemies = sprites.len()-1;
+                    for i in 1..sprites.len(){
+                        sprites[i].screen_region[1] -= 5.0;
+                        if sprites[i].screen_region[1] < 0.0 {
+                            enemies -= 1;
+                        }
+                    }
+
+                    if enemies == 0 {
+                        show_end_screen = true;
+                    }
                 }
-                let platform_top = platform_position[1];
-                let platform_bottom = platform_top + CELL_HEIGHT;
-                if ball_position[1] > platform_top && ball_position[1] < platform_bottom {
-                    ball_velocity[1] = -ball_velocity[1];
+                 */
+
+                else {
+
+                    // PLATOFORM MOTION
+                    platform_position = sprites::move_platform(&input, platform_position);
+                    sprites[0].screen_region[0] = platform_position[0];
+                    sprites[0].screen_region[1] = platform_position[1];
+                    // PLATOFORM MOTION END
+
+                    // BALL MOTION
+                    ball_position[0] += ball_velocity[0];
+                    ball_position[1] += ball_velocity[1];
+                    // colliding off walss
+                    if ball_position[0] < 0.0 || ball_position[0] > WINDOW_WIDTH {
+                        ball_velocity[0] = -ball_velocity[0];
+                    }
+                    if ball_position[1] > WINDOW_HEIGHT {
+                        ball_velocity[1] = -ball_velocity[1];
+                    }
+                    /*
+                    if ball_position[1] < 0.0 || ball_position[1] > WINDOW_HEIGHT {
+                        ball_velocity[1] = -ball_velocity[1];
+                    }
+                     */
+        
+                    //need to detect collision
+                    let platform_top = platform_position[1];
+                    let platform_bottom = platform_top + CELL_HEIGHT;
+                    let platform_left = platform_position[0];
+                    let platform_right = platform_left + CELL_WIDTH;
+                    if ball_position[1] > platform_top && ball_position[1] < platform_bottom && ball_position[0] > platform_left && ball_position[0] < platform_right{
+                        println!("{} and {}", platform_left, platform_right);
+                        ball_velocity[1] = -ball_velocity[1];
+                    }
+                    /*
+                    if ball_position[1] > platform_top && ball_position[1] < platform_bottom {
+                        ball_velocity[1] = -ball_velocity[1];
+                    }
+                     */
+                    
+                    // game over
+                    if ball_position[1] < 0.0 {
+                        println!("Touched ground");
+                        game_over = true;
+                    }
+
+                    // update ball's screen region in sprites vector
+                    sprites[5].screen_region[0] = ball_position[0];
+                    sprites[5].screen_region[1] = ball_position[1];
+                    // BALL MOTION END
+
+                    
+
+                    /*
+                    if sprite_position[1] + CELL_HEIGHT >= WINDOW_HEIGHT {
+                        you_won = true;
+                    }
+                     */
                 }
-                // update ball's screen region in sprites vector
-                sprites[5].screen_region[0] = ball_position[0];
-                sprites[5].screen_region[1] = ball_position[1];
-                // BALL MOTION END
+                
 
                 // Then send the data to the GPU!
                 input.next_frame();
