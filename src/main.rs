@@ -33,7 +33,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     // let mut input = input::Input::default();
     // let mut renderer = sprites::SpriteRenderer::new(&gpu);
     let mut game_over = false; 
-    //let mut you_won = false;
+    let mut you_won = false;
     
     let mut gpu = gpu::WGPU::new(&window).await; //added to
     
@@ -372,6 +372,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                 if game_over {
                     println!("Game Over");
                     *control_flow = ControlFlow::Exit;
+                } else if game_win {
+                    println!("You Win!");
+                    *control_flow = ControlFlow::Exit;
                 }
                 /*
                 else if you_won {
@@ -434,6 +437,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         println!("Touched ground");
                         game_over = true;
                     }
+
+                    // game win
+                    // if all bricks are gone, game_win = true;
 
                     // update ball's screen region in sprites vector
                     sprites[5].screen_region[0] = ball_position[0];
