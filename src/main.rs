@@ -308,7 +308,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     });
 
     let mut sprites = sprites::create_sprites();
-    let mut platform_position: [f32; 2] = [WINDOW_WIDTH/2.0, 0.0];  
+    let mut platform_position: [f32; 2] = [WINDOW_WIDTH/2.0, 30.0]; 
 
     // for the ball motion
     let mut ball_position: [f32; 2] = [WINDOW_WIDTH / 2.0, WINDOW_HEIGHT / 2.0];
@@ -438,12 +438,13 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     }
                      */
         
-                    //need to detect collision
-                    let platform_top = platform_position[1];
-                    let platform_bottom = platform_top + CELL_HEIGHT;
-                    let platform_left = platform_position[0];
-                    let platform_right = platform_left + CELL_WIDTH;
-                    if ball_position[1] > platform_top && ball_position[1] < platform_bottom && ball_position[0] > platform_left && ball_position[0] < platform_right{
+                    //collision with platform
+                    let platform_bottom = platform_position[1];
+                    let platform_top = platform_bottom + CELL_HEIGHT;
+                    let platform_left = platform_position[0] - 30.0;
+                    let platform_right = platform_left + CELL_WIDTH + 30.0;
+                    print!("top {} bot {}", platform_top, platform_bottom);
+                    if ball_position[1] < platform_top && ball_position[1] > platform_bottom && ball_position[0] > platform_left && ball_position[0] < platform_right{
                         ball_velocity[1] = -ball_velocity[1];
                     }
                     
@@ -462,8 +463,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
 
                     // game win
                     // set the number of bricks
-                    if bricks_popped == 5 {
-                        println!("Yay! You smashed all the bricks!");
+                    if bricks_popped > 4 {
+                        println!("Yay! You smashed 5 bricks!");
                         you_won = true;
                     }
 
