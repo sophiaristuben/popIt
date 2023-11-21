@@ -443,7 +443,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     let platform_top = platform_bottom + CELL_HEIGHT;
                     let platform_left = platform_position[0] - 30.0;
                     let platform_right = platform_left + CELL_WIDTH + 30.0;
-                    print!("top {} bot {}", platform_top, platform_bottom);
+                    //print!("top {} bot {}", platform_top, platform_bottom);
                     if ball_position[1] < platform_top && ball_position[1] > platform_bottom && ball_position[0] > platform_left && ball_position[0] < platform_right{
                         ball_velocity[1] = -ball_velocity[1];
                     }
