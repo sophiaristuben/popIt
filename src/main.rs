@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use std::{borrow::Cow, mem, path::Path};
+use std::{borrow::Cow, mem, path::Path, collections::HashMap};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -35,7 +35,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     // let mut renderer = sprites::SpriteRenderer::new(&gpu);
     let mut game_over = false; 
     let mut you_won = false;
-    let mut bricks_popped = 0;
+    let mut coin_gained = 0;
     
     let mut gpu = gpu::WGPU::new(&window).await; //added to
     
@@ -307,7 +307,11 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         mapped_at_creation: false,
     });
 
-    let mut sprites = sprites::create_sprites();
+    let mut sprites_return = sprites::create_sprites();
+    let mut sprites = sprites_return.0;
+    let mut sprite_types = sprites_return.1;
+    let mut coin_dict: HashMap<usize, &str> = HashMap::new();
+
     let mut platform_position: [f32; 2] = [WINDOW_WIDTH/2.0, 30.0]; 
 
     // for the ball motion
@@ -378,22 +382,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     println!("You Won!");
                     *control_flow = ControlFlow::Exit;
                 }
-                /*
-                else if you_won {
-                    // enemy sprites fall!
-                    let mut enemies = sprites.len()-1;
-                    for i in 1..sprites.len(){
-                        sprites[i].screen_region[1] -= 5.0;
-                        if sprites[i].screen_region[1] < 0.0 {
-                            enemies -= 1;
-                        }
-                    }
-
-                    if enemies == 0 {
-                        show_end_screen = true;
-                    }
-                }
-                 */
 
                 else {
 
@@ -416,12 +404,19 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                         if ball_position[1] >= brick_bottom && ball_position[0] > brick_left && ball_position[0] < brick_right{  
                             //println!("collided {} index with {} bottom {} left", i, brick_bottom, brick_left);
                             ball_velocity[1] = -ball_velocity[1];
-                            bricks_popped += 1;
-                            
+
+                            if sprite_types[i] == "coin" {
+                                if !coin_dict.contains_key(&i) {
+                                    coin_dict.insert(i, sprite_types[i]);
+                                    coin_gained += 1;
+                                    println!("Coin gained! Total coins: {}", coin_gained);
+                                }
+                            }
                             // erase the brick
                             sprites[i].screen_region = [0.0, 0.0, 0.0, 0.0];
                         }
                     }
+                    
 
                     // colliding off walls
                     if ball_position[0] < 0.0 || ball_position[0] > WINDOW_WIDTH {
@@ -432,40 +427,40 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     }
   
                     // for bouncing off the bottom, comment out later
-                    /*
-                    if ball_position[1] < 0.0 || ball_position[1] > WINDOW_HEIGHT {
-                        ball_velocity[1] = -ball_velocity[1];
-                    }
-                     */
+                    // if ball_position[1] < 0.0 || ball_position[1] > WINDOW_HEIGHT {
+                    //     ball_velocity[1] = -ball_velocity[1];
+                    // }
+                     
         
                     //collision with platform
                     let platform_bottom = platform_position[1];
-                    let platform_top = platform_bottom + CELL_HEIGHT;
-                    let platform_left = platform_position[0] - 30.0;
-                    let platform_right = platform_left + CELL_WIDTH + 30.0;
-                    //print!("top {} bot {}", platform_top, platform_bottom);
-                    if ball_position[1] < platform_top && ball_position[1] > platform_bottom && ball_position[0] > platform_left && ball_position[0] < platform_right{
-                        ball_velocity[1] = -ball_velocity[1];
+                    let platform_top = platform_bottom + CELL_HEIGHT*0.8;
+                    let platform_left = platform_position[0]-15.0;
+                    let platform_right = platform_left + CELL_WIDTH * 2.0;
+                    if ball_position[1] < platform_top && 
+                        ball_position[1] > platform_bottom && 
+                        ball_position[0] > platform_left && 
+                        ball_position[0] < platform_right{
+                
+                            // bounce off platformm
+                            ball_velocity[1] = -ball_velocity[1];
                     }
                     
-                    /* 
-                    if ball_position[1] > platform_top && ball_position[1] < platform_bottom {
-                        ball_velocity[1] = -ball_velocity[1];
-                    }
-                    */
-   
+
                     // game over
                     if ball_position[1] < 0.0 {
-                        println!("Touched ground");
-                        // commenting out for testing purposes
                         game_over = true;
                     }
 
                     // game win
                     // set the number of bricks
-                    if bricks_popped > 4 {
+                    if coin_gained > 4 {
                         println!("Yay! You smashed 5 bricks!");
                         you_won = true;
+
+                        for (i, sprite_type) in sprite_types.iter().enumerate() {
+                            println!("Index: {}, Sprite Type: {}", i, sprite_type);
+                        }
                     }
 
                     // update ball's screen region in sprites vector
@@ -473,13 +468,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     sprites[1].screen_region[1] = ball_position[1];
                     // BALL MOTION END
 
-                    
 
-                    /*
-                    if sprite_position[1] + CELL_HEIGHT >= WINDOW_HEIGHT {
-                        you_won = true;
-                    }
-                     */
                 }
                 
 
