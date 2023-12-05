@@ -21,9 +21,6 @@ compile_error!("Can't choose both vbuf and uniform sprite features");
 // ask about how we can auto set this
 pub const  WINDOW_WIDTH: f32 = 970.0;
 pub const  WINDOW_HEIGHT: f32 = 700.0;
-// ask about how we can auto set this
-pub const  WINDOW_WIDTH: f32 = 970.0;
-pub const  WINDOW_HEIGHT: f32 = 700.0;
 
 pub const NUMBER_OF_CELLS: i32 = 16;
 
@@ -162,10 +159,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         bind_group_layouts: &[&sprite_bind_group_layout, &texture_bind_group_layout],
         push_constant_ranges: &[],
     });
-
-    // let swapchain_capabilities = surface.get_capabilities(&adapter);
-    // let swapchain_format = swapchain_capabilities.formats[0];
-
 
     let pipeline_layout_over = gpu.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
