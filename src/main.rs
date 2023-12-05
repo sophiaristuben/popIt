@@ -21,6 +21,9 @@ compile_error!("Can't choose both vbuf and uniform sprite features");
 // ask about how we can auto set this
 pub const  WINDOW_WIDTH: f32 = 970.0;
 pub const  WINDOW_HEIGHT: f32 = 700.0;
+// ask about how we can auto set this
+pub const  WINDOW_WIDTH: f32 = 970.0;
+pub const  WINDOW_HEIGHT: f32 = 700.0;
 
 pub const NUMBER_OF_CELLS: i32 = 16;
 
@@ -461,6 +464,8 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
                     }
 
                     // update ball's screen region in sprites vector
+                    sprites[1].screen_region[0] = ball_position[0];
+                    sprites[1].screen_region[1] = ball_position[1];
                     sprites[1].screen_region[0] = ball_position[0];
                     sprites[1].screen_region[1] = ball_position[1];
                     // BALL MOTION END
