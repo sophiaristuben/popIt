@@ -1,4 +1,3 @@
-use bytemuck::{Pod, Zeroable};
 use std::{borrow::Cow, mem, path::Path, collections::HashMap};
 use winit::{
     event::{Event, WindowEvent},
@@ -39,8 +38,6 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
     
     let mut gpu = gpu::WGPU::new(&window).await; //added to
     
-    let size = window.inner_size();
-
     log::info!("Use sprite mode {:?}", SPRITES);
 
     // Load the shaders from disk
@@ -173,7 +170,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         push_constant_ranges: &[],
     });
 
-    let render_pipeline_full = gpu.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let _render_pipeline_full = gpu.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: None,
         layout: Some(&pipeline_layout_over),
         vertex: wgpu::VertexState {
@@ -192,7 +189,7 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         multiview: None,
     });
 
-    let render_pipeline = gpu.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let _render_pipeline = gpu.device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: None,
         layout: Some(&pipeline_layout),
         vertex: wgpu::VertexState {
@@ -307,9 +304,9 @@ async fn run(event_loop: EventLoop<()>, window: Window) {
         mapped_at_creation: false,
     });
 
-    let mut sprites_return = sprites::create_sprites();
+    let sprites_return = sprites::create_sprites();
     let mut sprites = sprites_return.0;
-    let mut sprite_types = sprites_return.1;
+    let sprite_types = sprites_return.1;
     let mut coin_dict: HashMap<usize, &str> = HashMap::new();
 
     let mut platform_position: [f32; 2] = [WINDOW_WIDTH/2.0, 30.0]; 
@@ -568,65 +565,4 @@ fn main() {
             .expect("couldn't append canvas to document body");
         wasm_bindgen_futures::spawn_local(run(event_loop, window));
     }
-}
-async fn load_texture(
-    path: impl AsRef<std::path::Path>,
-    label: Option<&str>,
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
-) -> Result<(wgpu::Texture, image::RgbaImage), Box<dyn std::error::Error>> {
-    #[cfg(target_arch = "wasm32")]
-    let img = {
-        let fetch = web_sys::window()
-            .map(|win| win.fetch_with_str(path.as_ref().to_str().unwrap()))
-            .unwrap();
-        let resp: web_sys::Response = wasm_bindgen_futures::JsFuture::from(fetch)
-            .await
-            .unwrap()
-            .into();
-        log::debug!("{:?} {:?}", &resp, resp.status());
-        let buf: js_sys::ArrayBuffer =
-            wasm_bindgen_futures::JsFuture::from(resp.array_buffer().unwrap())
-                .await
-                .unwrap()
-                .into();
-        log::debug!("{:?} {:?}", &buf, buf.byte_length());
-        let u8arr = js_sys::Uint8Array::new(&buf);
-        log::debug!("{:?}, {:?}", &u8arr, u8arr.length());
-        let mut bytes = vec![0; u8arr.length() as usize];
-        log::debug!("{:?}", &bytes);
-        u8arr.copy_to(&mut bytes);
-        image::load_from_memory_with_format(&bytes, image::ImageFormat::Png)
-            .map_err(|e| e.to_string())?
-            .to_rgba8()
-    };
-    #[cfg(not(target_arch = "wasm32"))]
-    let img = image::open(path.as_ref())?.to_rgba8();
-    let (width, height) = img.dimensions();
-    let size = wgpu::Extent3d {
-        width,
-        height,
-        depth_or_array_layers: 1,
-    };
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
-        label,
-        size,
-        mip_level_count: 1,
-        sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
-        usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
-        view_formats: &[],
-    });
-    queue.write_texture(
-        texture.as_image_copy(),
-        &img,
-        wgpu::ImageDataLayout {
-            offset: 0,
-            bytes_per_row: Some(4 * width),
-            rows_per_image: Some(height),
-        },
-        size,
-    );
-    Ok((texture, img))
 }
